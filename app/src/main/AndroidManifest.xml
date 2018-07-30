@@ -16,6 +16,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".wordvalue.WordValueActivity"
+            android:label="@string/word_value.title"></activity>
     </application>
 
 </manifest>

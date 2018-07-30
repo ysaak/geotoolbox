@@ -1,98 +1,66 @@
 package ysaak.geotoolbox;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import java.text.Normalizer;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
+
+import ysaak.geotoolbox.menu.ToolMenuItem;
+import ysaak.geotoolbox.menu.ToolsMenuAdapter;
+import ysaak.geotoolbox.wordvalue.WordValueActivity;
 
 public class MainActivity extends Activity {
-    private LinearLayout wordValuePanel = null;
-    private LinearLayout wordDigitalRootPanel = null;
-    private TextView wordValueField = null;
-    private TextView wordValueOneDigitField = null;
+
+    private final List<ToolMenuItem> toolMenuList = new ArrayList<>();
+    private ToolsMenuAdapter menuAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final EditText wordInputField = findViewById(R.id.word_input_field);
-        wordValueField = findViewById(R.id.word_value_field);
-        wordValueOneDigitField = findViewById(R.id.word_digital_root);
+        final RecyclerView menuList = findViewById(R.id.menu_list);
 
-        wordValuePanel = findViewById(R.id.word_value_panel);
-        wordDigitalRootPanel = findViewById(R.id.word_digital_root_panel);
+        menuAdapter = new ToolsMenuAdapter(toolMenuList);
+        final RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        menuList.setLayoutManager(mLayoutManager);
+        menuList.setItemAnimator(new DefaultItemAnimator());
+        menuList.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        menuList.setAdapter(menuAdapter);
 
-        wordInputField.addTextChangedListener(new TextWatcher() {
+        menuList.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), menuList, new RecyclerTouchListener.ClickListener() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {/**/}
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {/**/}
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                calculateAndDisplayWordValue(editable.toString());
+            public void onClick(View view, int position) {
+                ToolMenuItem item = toolMenuList.get(position);
+                startSubActivity(item.activityClass);
             }
-        });
 
-        calculateAndDisplayWordValue("");
+            @Override
+            public void onLongClick(View view, int position) {/**/}
+        }));
+
+        prepareMenuItems();
     }
 
-    private void calculateAndDisplayWordValue(String word) {
-        if (word == null || word.trim().isEmpty()) {
-            wordValuePanel.setVisibility(View.INVISIBLE);
-            wordDigitalRootPanel.setVisibility(View.INVISIBLE);
-            wordValueField.setText("");
-            wordValueOneDigitField.setText("");
-            return;
-        }
+    private void prepareMenuItems() {
+        toolMenuList.add(createItem(WordValueActivity.class, R.string.word_value_title, R.string.word_value_description));
 
-        int value = 0;
-
-        String loweredWord = stripAccents(word.trim().toLowerCase());
-
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-
-        for (char c : loweredWord.toCharArray()) {
-            if (!first) {
-                sb.append(" + ");
-            }
-
-            if (c >= 'a' && c <= 'z') {
-                int cVal = (int) c - 'a' + 1;
-                value += cVal;
-                sb.append(cVal);
-            }
-            else {
-                sb.append("0");
-            }
-
-            first = false;
-        }
-
-        sb.append(" = ").append(value);
-
-        wordValueField.setText(sb.toString());
-
-        int digitalRoot = value % 9;
-        wordValueOneDigitField.setText(String.format(Locale.getDefault(), "%d = %d", value, digitalRoot));
-        wordValuePanel.setVisibility(View.VISIBLE);
-        wordDigitalRootPanel.setVisibility(View.VISIBLE);
+        menuAdapter.notifyDataSetChanged();
     }
 
-    private static String stripAccents(String s) {
-        s = Normalizer.normalize(s, Normalizer.Form.NFD);
-        s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
-        return s;
+    private ToolMenuItem createItem(Class<?> activityClass, int titleId, int descriptionId) {
+        return new ToolMenuItem(activityClass, getResources().getString(titleId), getResources().getString(descriptionId));
+    }
+
+    private void startSubActivity(Class<?> activity) {
+        Intent intent = new Intent(this, activity);
+        startActivity(intent);
     }
 }
