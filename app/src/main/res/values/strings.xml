@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">GeoToolbox</string>
+    <string name="app_description">Calcul du checksum d\'une phrase</string>
+    <string name="word_field_hint">Texte à calculer</string>
+    <string name="word_value">Valeur du texte</string>
+    <string name="word_value_one_digit">Somme sur 1 chiffre</string>
+</resources>
